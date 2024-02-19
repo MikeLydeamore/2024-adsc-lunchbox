@@ -1,0 +1,308 @@
+---
+pagetitle: "Data, Health & Biology"
+subtitle: "It's not the size of your data, it's how you use it"
+author: "Michael Lydeamore"
+email: "michael.lydeamore@monash.edu"
+department: "Department of Econometrics and Business Statistics"
+unit-url: "https://slides.michaellydeamore.com/2024-adsc-lunchbox"
+format: 
+  revealjs:
+    logo: images/monash-stacked-blue-rgb-transparent.png
+    slide-number: true
+    multiplex: false
+    theme: assets/monash.scss
+    show-slide-number: all
+    show-notes: false
+    controls: true
+    width: 1280
+    height: 750
+    css: [assets/tachyons-addon.css, assets/custom.css, assets/lecture-01.css]
+    include-after-body: "assets/after-body.html"
+    chalkboard:
+      boardmarker-width: 5
+      buttons: true
+---
+
+
+```{r, include = FALSE}
+current_file <- knitr::current_input()
+basename <- gsub(".[Rq]md$", "", current_file)
+
+knitr::opts_chunk$set(
+  fig.path = sprintf("images/%s/", basename),
+  fig.width = 6,
+  fig.height = 4,
+  fig.align = "center",
+  out.width = "100%",
+  fig.retina = 3,
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = TRUE,
+  cache.path = "cache/"
+)
+
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(deSolve)
+library(conmat)
+```
+
+## <br>[`conmat`: Programmatic generation of synthetic contact matrices]{.monash-blue .title} {#etc5513-title background-image="images/bg-01.png"}
+
+### `r rmarkdown::metadata$subtitle`
+
+`r rmarkdown::metadata$author`
+
+`r rmarkdown::metadata$department`
+
+::: tl
+<br>
+
+<ul class="fa-ul">
+
+<li>
+
+[<i class="fas fa-envelope"></i>]{.fa-li}`r rmarkdown::metadata$email`
+
+</li>
+
+<li>
+
+[<i class="fa-solid fa-globe"></i>]{.fa-li}<a href="`r rmarkdown::metadata[["unit-url"]]`">`r rmarkdown::metadata[["unit-url"]]`</a>
+
+</li>
+
+</ul>
+
+<br>
+:::
+
+## My Roadmap {.smaller}
+
+* Bachelor of Mathematical Sciences at the University of Adelaide (completed 2012)
+* Masters of Philosophy at the University of Adelaide (completed 2015)
+* PhD at the University of Melbourne (completed 2019)
+* Joined Monash University in mid-2019
+    * Including honorary position at the SaferCare Victoria, Department of Health & Human Services
+* Recruited into the COVID-19 response in late February/early March
+* Appointed Manager of Analytics in September
+* Rejoined Monash in 2021, including the Doherty COVID-19 Modelling Consortium
+* Joined EBS in September 2021
+
+# Burden of Healthcare Associated Infections in Australia
+
+Joint work with Brett Mitchell, Tracey Bucknall, Allen Cheng, Phil Russo & Andrew Stewardson
+
+## Healthcare asociated infections {.smaller}
+
+Healthcare associated infections (HAIs) are associated with increased morbidity and mortality.
+
+Five of the most common HAIs are:
+
+* Clostridiodes difficile --- causes severe damage to the colon, can be fatal
+* Bloodstream infection (sepsis) --- estimated mortality rate of 15-30%
+* Urinary track infection --- low mortality but associated with multi-drug resistance and significantly longer stays
+* Healthcare acquired pneumonia --- mortality rate of 40-70%, increasing dramatically with age
+* Surgical site infection --- significantly increases length of stay
+
+::: {.fragment}
+But, HAIs are not notifiable => We have no robust way to track whether their prevalence is increasing or decreasing.
+:::
+
+## Overseas monitoring
+
+HAIs are actively monitored across Europe through the ECDC.
+
+In 2016 (based on 2012 data), 2,609,911 new HAIs are estimated to have occurred.
+
+::: {.fragment}
+The data for this was a _point prevalence survey_, on an enormous scale:
+
+* 273,753 patients
+* 1,149 hospitals
+:::
+
+## Point prevalence survey
+
+A point prevalence survey counts the number of people with a condition on a given day.
+
+We ran a PPS in Australia in 2019, consisting of:
+
+* Adults in [19]{.fragment fragment-index=5} [large]{.fragment fragment-index=2} [acute care]{.fragment fragment-index=4} [public]{.fragment fragment-index=3} hospitals
+
+All acute cards wards were included. Non-acute, paediatric, NICU, rehab, and ED were excluded.
+
+::: {.fragment}
+The hospitals sampled make up approximately 60% of all overnight separations in Australia.
+:::
+
+## Point prevalence survey
+
+* 2767 patients sampled between 6 Aug and 29 Nov 2018
+* Median age: 67 (range 18-104)
+* 52.9% male, 46.6% female, 0.5% unknown/other
+* 85.7% patients in major city hospitals
+
+# Methodology time
+
+We have to go from point prevalence to annual incidence...
+
+## Estimation methodology
+
+#### Step 1: Estimation of hospital prevalence
+
+Hospital Prevalence ($P$) is estimated as:
+
+$$P = r \times \text{Beta}(n_\text{obs}, N - n_\text{obs}+1) + (1-r) \times \text{Beta}(n_\text{obs}+1, N-n_\text{obs}),$$
+
+where $n_\text{obs}$ is the number of patients observed with a HAI and $N$ is the total number of patients in the PPS.
+
+This is a standard extrapolation from a binomial sample with a lot of zeros.
+
+## Estimation methodology
+
+#### Step 2: Estimation of hospital incidence
+
+Hospital incidence ($I$) calculated as:
+
+$$I = P \frac{LA}{LOI},$$
+
+where:
+
+* $P$ is the hospital prevalence from Step 1
+* $LA$ is the mean length of stay and
+* $LOI$ is the length of infection
+
+::: {.fragment}
+🎉🎉 Australia actually captures $LA$ through the AIHW 🎉🎉
+:::
+
+## Estimation methodology
+
+#### Step 2a: Length of infection
+
+$LOI$ is not available, but instead we have $LOI_{pps}$ --- the length of infection until the date of survey. We can calculate
+
+$$P(LOI_{pps} = 1),$$
+
+which is just the probability that a patient is in the first day of their HAI. Then,
+
+$$E[LOI] = 1/P(LOI_{pps} = 1).$$
+
+For a small sample size, this is heavily biased, so we take a mixture of this estimator and $E[LOI_{pps}]$.
+
+## Estimation methodology
+
+#### Step 3: Estimation of population incidence
+
+Calculate population incidence simply as
+
+$$I_\text{pop} = I \times N_\text{discharges}.$$
+
+::: {.fragment}
+🎉🎉 We capture this too! $N_\text{discharges} = 3,713,513,$ 60% of the total admissions in a given year. 
+:::
+
+::: {.fragment}
+In the ECDC PPS, this quantity is **not** captured. They estimate using patient-days and the number of patients.
+:::
+
+## Estimation methodology
+
+#### Step 4: Stratification by age and sex
+
+Use a multinomial likelihood function with a Dirichlet prior, with weights taken from the number of cases in each age/sex category.
+
+::: {.fragment}
+A psuedocount is added to each strata ($0.001 \sum{\text{weights}}$) to ensure the likelihood can be calculated with empty strata.
+:::
+
+## Estimation methodology
+
+#### Step 5: Adjustment for life expectancy
+
+Use the "McCabe score", which gives the life expectancy according to secerity of a disease.
+
+Patients are categorised as:
+
+* non-fatal
+* fatal (average life expectancy of 3 years)
+* [rapidly fatal (average life expectancy of 0.5 years)]{.fragment}
+
+::: {.fragment}
+These scores, combined with disease outcome trees, give DALYs and deaths.
+:::
+
+## Disease outcome trees
+
+![](images/outcome-tree.pdf){fig-align="center"}
+
+## Key results {.smaller}
+
+::: {.r-stack}
+
+|         | Number of HAIs <br> (95% CI)         | Deaths <br> (95% CI)        | DALYs <br> (95% CI)             |
+| ------- | -------------------------------- | ----------------------- | --------------------------- |
+| **SSI** | 44,238 <br> (31,176 - 73,797)        | 876 <br> (617 - 1,263)      | 13,197 <br> (9,298 - 19,001)    |
+| **UTI** | 42,408 <br> (25,200 - 68,735)        | 729 <br> (259 - 1,772)      | 16,087 <br> (5,939 - 37,218)    |
+| **CDI** | 5,125 <br> (2,360 - 10,740)          | 262 <br> (13 - 836)         | 2,757 <br> (241 - 8,655)        |
+| **HAP** | 51,499 <br> (31,343 - 82,877)        | 1,904 <br> (462 - 4,430)    | 39,276 <br> (17,608 - 77,915)   |
+| **BSI** | 23,979 <br> (15,658 - 36,245)        | 3,512 <br> (1,874 - 6,075)  | 46,773 <br> (26,205 - 79,104)   |
+| **All** | **170,574** <br> (135,779 - 213,898) | 7,583 <br> (4,941 - 11,135) | 122,376 <br> (85,136 - 172,784) |
+
+::: {.fragment style="background-color: white; border: solid thick red; padding: 10px;"}
+That's 1 in 20 _admissions_ resulting in an avoidable infection!
+:::
+:::
+
+## Key results
+
+::: {.columns}
+::: {.column width='50%'}
+![](images/Figure1-cases_per_100k.png){fig-align="center"}
+
+:::
+::: {.column width='50%'}
+![](images/Figure4-dalys_per_100k.png){fig-align="center"}
+
+:::
+:::
+
+## Key results
+
+![](images/Figure2-cases_stratified_per_100k.png){fig-align="center"}
+
+## Key results
+
+![](images/Figure3-deaths_per_100k.png){fig-align="center"}
+
+## Novelty
+
+* First estimate of HAI burden in Australia using (relatively) robust survey data in an established framework
+* Based on first point prevalence survey since 1984
+
+* There is no routine surveillance of HAIs in Australia
+* Point prevalence surveys remain the only way to understand the burden of these conditions
+
+## Summary
+
+* 498 DALYs per 100,000 is a large amount
+    * Motor vehicles: 180 DALYs
+    * Infectious diseases: 370 DALYs
+    * Respiratory diseases: 1380 DALYs
+
+::: {.fragment}
+This work has informed guidance on HAI surveillance in Australia, including new funding schemes to better understand these conditions.
+:::
+
+::: {.fragment}
+And all this based on just 2767 patients from 19 hospitals...
+:::
+
+# HAIs are largely preventable.
+
+They represent great opportunity for improvement, and we have a long way to go to prevent them entirely.
+
+
