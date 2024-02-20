@@ -35,10 +35,10 @@ knitr::opts_chunk$set(
   fig.align = "center",
   out.width = "100%",
   fig.retina = 3,
-  echo = TRUE,
+  echo = FALSE,
   warning = FALSE,
   message = FALSE,
-  cache = TRUE,
+  cache = FALSE,
   cache.path = "cache/"
 )
 
@@ -46,7 +46,9 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(deSolve)
-library(conmat)
+library(patchwork)
+
+source("nldr_code.R")
 ```
 
 ## <br>[`conmat`: Programmatic generation of synthetic contact matrices]{.monash-blue .title} {#etc5513-title background-image="images/bg-01.png"}
@@ -305,4 +307,133 @@ And all this based on just 2767 patients from 19 hospitals...
 
 They represent great opportunity for improvement, and we have a long way to go to prevent them entirely.
 
+# Visualising how non-linear dimension reduction warps your data
 
+**J. Lakshika**, D. Cook, P. Harrison, T. Talagala, M. Lydeamore
+
+## High dimensional data
+
+The world collects a lot of data. Much of this data is very wide.
+
+This "high-dimensional" data is very challenging to visualise, as we can only see in two dimensions.
+
+::: {.fragment}
+One key application area is single-cell RNA data. The main task is to identify groups of cells with similar expression profiles
+
+Data is collected on the amount of a gene expressed by a cell. Similar types of cells should express similar types of certain "marker" genes.
+:::
+
+::: {.fragment .center}
+#### But how do we check?
+:::
+
+## Dimension reduction
+Dimension reduction is a common way to reduce a high dimensional dataset into a lower number of dimensions.
+
+Linear techniques (like PCA) are classical tecniques 
+
+
+## An example
+
+::: {.column width="50%"}
+
+```{r}
+#| echo: false
+
+data <- readRDS("data/s_curve.rds")
+langevitour::langevitour(data[, 1:7], width = "100%", height="100%")
+```
+
+:::
+
+## An example
+
+Five different NLDRs give similar but definitely different curves:
+
+```{r}
+tsne_plot <- readRDS("data/s_curve_tsne_27.rds") |>
+    plot_tSNE_2D() + # ggtitle("(a)") +
+    theme_linedraw() +
+    theme(
+        plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5),
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()
+    ) +
+    annotate(geom = "text", label = "a", x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
+umap_plot <- readRDS("data/s_curve_umap.rds") |>
+    plot_UMAP_2D() + # ggtitle("(b)") +
+    theme_linedraw() +
+    theme(
+        plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5),
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()
+    ) +
+    annotate(geom = "text", label = "b", x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
+phate_plot <- readRDS("data/s_curve_phate.rds") |>
+    plot_PHATE_2D() + # ggtitle("(c)") +
+    theme_linedraw() +
+    theme(
+        plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5),
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()
+    ) +
+    annotate(geom = "text", label = "c", x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
+trimap_plot <- readRDS("data/s_curve_trimap.rds") |>
+    plot_TriMAP_2D() + # ggtitle("(d)") +
+    theme_linedraw() +
+    theme(
+        plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5),
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()
+    ) +
+    annotate(geom = "text", label = "d", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, size = 3)
+
+pacmap_plot <- readRDS("data/s_curve_pacmap.rds") |>
+    plot_PaCMAP_2D() + # ggtitle("(e)") +
+    theme_linedraw() +
+    theme(
+        plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5),
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()
+    ) +
+    annotate(geom = "text", label = "e", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, size = 3)
+
+# tsne_plot + umap_plot + phate_plot + trimap_plot + pacmap_plot + plot_layout(ncol = 5)
+```
+
+::: {layout-nrow=2}
+
+```{r}
+tsne_plot
+```
+
+```{r}
+umap_plot
+```
+
+```{r}
+phate_plot
+```
+
+```{r}
+trimap_plot
+```
+
+```{r}
+pacmap_plot
+```
+
+:::
