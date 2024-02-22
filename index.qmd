@@ -51,7 +51,7 @@ source("nldr_code.R")
 source("quollr_code.R")
 ```
 
-## <br>[`conmat`: Programmatic generation of synthetic contact matrices]{.monash-blue .title} {#etc5513-title background-image="images/bg-01.png"}
+## <br>[Data, Health & Biology]{.monash-blue .title} {#etc5513-title background-image="images/bg-01.png"}
 
 ### `r rmarkdown::metadata$subtitle`
 
