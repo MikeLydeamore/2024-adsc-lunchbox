@@ -30,8 +30,6 @@ basename <- gsub(".[Rq]md$", "", current_file)
 
 knitr::opts_chunk$set(
   fig.path = sprintf("images/%s/", basename),
-  fig.width = 6,
-  fig.height = 4,
   fig.align = "center",
   out.width = "100%",
   fig.retina = 3,
@@ -47,6 +45,7 @@ library(ggplot2)
 library(tidyr)
 library(deSolve)
 library(patchwork)
+library(readr)
 
 source("nldr_code.R")
 ```
@@ -327,24 +326,53 @@ Data is collected on the amount of a gene expressed by a cell. Similar types of 
 #### But how do we check?
 :::
 
-## Dimension reduction
-Dimension reduction is a common way to reduce a high dimensional dataset into a lower number of dimensions.
+## Tours
 
-Linear techniques (like PCA) are classical tecniques 
-
-
-## An example
-
-::: {.column width="50%"}
-
+::: {.columns}
+::: {.column width='50%'}
 ```{r}
 #| echo: false
 
 data <- readRDS("data/s_curve.rds")
-langevitour::langevitour(data[, 1:7], width = "100%", height="100%")
+langevitour::langevitour(data[, 1:7])
 ```
+:::
+::: {.column width='50%'}
+
+#### What is a tour?
+
+* Interactive and dynamic graphics to visualise high-dimensional data
+
+#### Why is the tour technique involved?
+
+* Tour shows a sequence of linear projections as a movie
+* It involves mentally assembling multiple low-dimensional views to comprehend the structure in higher dimensions
 
 :::
+:::
+
+
+## Dimension reduction 
+Dimension reduction is a common way to reduce a high dimensional dataset into a lower number of dimensions.
+
+* Linear techniques (like PCA) are classical techniques that use a linear mapping to reduce dimension
+* Recent years has seen non-linear mappings that can maximise variance in a 2D view
+* These mappings aim to preserve pairwise distances from high dimensions into lower dimensions
+
+::: {.fragment}
+* Common tools include: uMAP, tSNE, PACMAP and more recently, PHATE.
+:::
+
+::: {.fragment}
+As with anything designed to maximise variance, it is important to check these techniques aren't inventing structures.
+:::
+
+## Dimension reduction
+Formally speaking, the problem can be specified as:
+
+Consider the High-D data a rectangular matrix $X_{n\times p}$, with $n$ observations and $p$ dimensions. 
+
+We aim to discover a projection $Y_{n \times d}$, i.e. an $n \times d$ matrix with $d \ll p$.
 
 ## An example
 
@@ -414,26 +442,220 @@ pacmap_plot <- readRDS("data/s_curve_pacmap.rds") |>
 # tsne_plot + umap_plot + phate_plot + trimap_plot + pacmap_plot + plot_layout(ncol = 5)
 ```
 
-::: {layout-nrow=2}
+```{r}
+(tsne_plot + umap_plot + phate_plot) / (trimap_plot + pacmap_plot)
+```
+
+## Even the same NLDR looks different
 
 ```{r}
-tsne_plot
+#| warning: false
+#| echo: false
+
+UMAP_data_7 <- read_rds(file = "data/s_curve_umap_7.rds")
+
+#(n-neighbors: 50)
+plot_list1_umap <- plot_UMAP_2D(UMAP_data_7) + #ggtitle("(b)") +
+  geom_point(alpha=0.5, size = 0.5, colour = "#8dd3c7", fill = "#8dd3c7") +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5), 
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  annotate(geom = 'text', label = 'a', x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
 ```
 
 ```{r}
-umap_plot
+#| warning: false
+#| echo: false
+
+UMAP_data_15 <- read_rds(file = "data/s_curve_umap_15.rds")
+
+#(n-neighbors: 50)
+plot_list2_umap <- plot_UMAP_2D(UMAP_data_15) + #ggtitle("(b)") + 
+  geom_point(alpha=0.5, size = 0.5, colour = "#a65628", fill = "#a65628") +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5), 
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  annotate(geom = 'text', label = 'b', x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
 ```
 
 ```{r}
-phate_plot
+#| warning: false
+#| echo: false
+
+UMAP_data_32 <- read_rds(file = "data/s_curve_umap_32.rds")
+
+#(n-neighbors: 50)
+plot_list3_umap <- plot_UMAP_2D(UMAP_data_32) + #ggtitle("(b)") +
+  geom_point(alpha=0.5, size = 0.5, color = "#f781bf", fill = "#f781bf") +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5), 
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  annotate(geom = 'text', label = 'c', x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
 ```
 
 ```{r}
-trimap_plot
+#| warning: false
+#| echo: false
+
+UMAP_data <- read_rds(file = "data/s_curve_umap.rds")
+
+#(n-neighbors: 50)
+plot_list4_umap <- plot_UMAP_2D(UMAP_data) + #ggtitle("(b)") +
+  geom_point(alpha=0.5, size = 0.5, colour = "#999999", fill = "#999999") +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5), 
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  annotate(geom = 'text', label = 'd', x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
 ```
 
 ```{r}
-pacmap_plot
+(plot_list1_umap + plot_list2_umap) / (plot_list3_umap + plot_list4_umap)
 ```
 
+## A method to analyse goodness-of-fit
+
+We have developed a method to project the 2D dimension reduction back into higher dimensions where we can visualise discrepancies.
+
+The algorithm has four steps:
+
+::: {.incremental}
+
+1. Parition DR data into hexagonal bins
+2. Triangulate centroids of these bins to form a 2D manifold
+3. Map the 2D bins to High-D using the points contained within each bin
+4. Measure "model error" and visualise in High-D
+
+:::
+
+## Step 1: Partitioning DR data into hexagonal bins
+::: {.columns}
+::: {.column width='50%'}
+![](images/hexagonate_example.jpg){fig-align="center" height="575px"}
+:::
+::: {.column width='50%'}
+```{r}
+#| fig-height: 10
+df_bin_centroids_all <- readRDS("data/df_bin_centroids_all.rds")
+readRDS("data/hex_full_count_df.rds") |>
+ggplot(aes(x = x, y = y)) +
+    geom_polygon(color = "black", aes(group = polygon_id), fill = "#FFFFFF") +
+    geom_point(data = df_bin_centroids_all, aes(x = x, y = y), color = "#33A02C", size = 4) +
+    theme_light() +
+    coord_fixed() + 
+    theme(
+        legend.position = "none", plot.title = element_text(size = 5, hjust = 0.5, vjust = -0.5),
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank() # change legend key width
+    )
+```
+:::
+:::
+
+::: {.aside}
+I believe this should be called "hexagonate..."
+:::
+
+
+## Step 2: Triangulate centroids of these bins
+::: {.columns}
+::: {.column width='50%'}
+Use Delauney triangulation to create a triangular mesh that is representative of the 2D data.
+
+::: {.note .smaller .fragment}
+Beause our hexagons are regular the resulting triangles will be _mostly_ equilateral (which is nice)
+:::
+:::
+::: {.column width='50%'}
+```{r}
+#| fig-height: 10
+tr_from_to_df_all <- readRDS("data/tr_from_to_df_all.rds")
+trimesh_all <- ggplot(df_bin_centroids_all, aes(x = x, y = y)) +
+    geom_segment(data = tr_from_to_df_all, aes(x = x_from, y = y_from, xend = x_to, yend = y_to)) +
+    geom_point(size = 4, colour = "#33A02C") +
+    coord_equal()
+trimesh_all <- trimesh_all +
+  #ggtitle("(a)") +
+  xlab(expression(C[x]^{(2)})) + ylab(expression(C[y]^{(2)})) +
+  theme_light() +
+    theme(legend.position = "none", plot.title = element_text(size = 5, hjust = 0.5, vjust = -0.5),
+          axis.title.x = element_blank(), axis.title.y = element_blank(),
+          axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+          axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank()
+    )
+
+trimesh_all
+
+```
+
+:::
+:::
+
+## Step 2a: Removing "long" edges
+
+Sometimes triangulation will give edges between two very distant nodes. This is not an accurate representation of the 2D surface, so we trim them off
+
+![](images/long-edges.jpg){fig-align="center"}
+
+## Step 3: Map from 2D to High-D
+
+::: {.fragment}
+Define the function $f: \mathbb{R}^p \rightarrow \mathbb{R}^2$ which maps the high-D point to it's NLDR equivalent.
+
+:::
+
+::: {.fragment}
+
+Let the set of all points in a single hexagon $i$ be denoted by $\mathbb{H}_i$, with centroid $\mathcal{h}_i$. 
+:::
+::: {.fragment}
+
+Then, let $g: \mathbb{R}^2 \rightarrow \mathbb{R}^2$ be a function that maps each point in 2D space to it's closest centroid.
+
+It follows that $f(g(x))$ maps the high-D point to the centroid in 2D.
+:::
+
+
+## Step 3: Map from 2D to High-D
+
+Define the high-dimension mean of all the points in $\mathbb{H}_i$ by $\hat{h}_i$. That is,
+
+$$\hat{h}^{(p)} = \frac{1}{|\mathbb{H}_i|}\sum_{x \in \mathbb{H}_i} \sum_{l = 1}^p x_{\cdot,l}$$
+
+::: {.fragment}
+Finally, we choose a function $v: \mathbb{R}^2 \rightarrow \mathbb{R}^p$ such that $$v(\mathcal{h}_i) = \hat{h}^{(p)}.$$
+
+:::
+
+
+::: {.fragment}
+[That is, the function $v$ maps the 2D centroid to the high-D mean of the points in the hexagon.]{.monash-blue}
+:::
+
+## Step 3: Map from 2D to High-D
+
+So, $(f \circ g)(x)$ gives the 2D centroid associated with $x$, and $v(h_i)$ gives the high-D centroid associated with 2D point $h_i$.
+
+Thus, $v(f \circ g)(x)$ gives the high-D centroid associated with the 2D embedding of the point $x$.
+
+::: {.fragment}
+We use this process to define a model of the 2D embedding in high dimensions, allowing us to visualise and compute error.
 :::
