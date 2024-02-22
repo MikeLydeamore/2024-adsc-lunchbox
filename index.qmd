@@ -48,6 +48,7 @@ library(patchwork)
 library(readr)
 
 source("nldr_code.R")
+source("quollr_code.R")
 ```
 
 ## <br>[`conmat`: Programmatic generation of synthetic contact matrices]{.monash-blue .title} {#etc5513-title background-image="images/bg-01.png"}
@@ -659,3 +660,153 @@ Thus, $v(f \circ g)(x)$ gives the high-D centroid associated with the 2D embeddi
 ::: {.fragment}
 We use this process to define a model of the 2D embedding in high dimensions, allowing us to visualise and compute error.
 :::
+
+## Step 4: Visualise model fit in High-D
+
+```{r}
+df_exe <- readRDS("data/df_exe.rds")
+distance_df_small_edges <- readRDS("data/distance_df_small_edges.rds")
+langevitour::langevitour(df_exe[1:(length(df_exe)-1)], lineFrom = distance_df_small_edges$from, lineTo = distance_df_small_edges$to, group = df_exe$type, levelColors = c("#807dba" , "#000000"))
+```
+
+## Real-world example: PBMC dataset
+
+
+```{r}
+#| out-width: 100%
+#| fig-pos: h
+
+UMAP_pbmc <- read_rds("data/pbmc_umap.rds")
+
+
+class_avg <- UMAP_pbmc |>
+  group_by(cell_label) |>
+  summarise(
+    UMAP1 = median(UMAP1),
+    UMAP2 = median(UMAP2)
+  ) |>
+  mutate(cell_label = as.numeric(cell_label)) |>
+  arrange(cell_label)
+
+class_avg$cell_label <- as.factor(class_avg$cell_label)
+
+levels(class_avg$cell_label) <- c("Memory \nCD4 T", "Naive CD4 T", "CD14+ Mono",  "B", "CD8 T", "FCGR3A+ \n Mono", "NK", "M-MDSC\n-like", "CD27-CD+ \n Memory T", "DC")
+
+
+plot_list2_pbmc <- UMAP_pbmc |>
+    ggplot(aes(x = UMAP1,
+               y = UMAP2, color = cell_label))+
+    geom_point(alpha=0.5) +
+    coord_equal() +
+    theme(plot.title = element_text(hjust = 0.5, size = 18, face = "bold")) + #ggtitle("(a)") +
+  theme_linedraw() +
+    theme(legend.position = "none", plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5),
+              axis.title.x = element_blank(), axis.title.y = element_blank(),
+              axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+              axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+              panel.grid.major = element_blank(), panel.grid.minor = element_blank(), #change legend key width
+        legend.title = element_text(size=5), #change legend title font size
+        legend.text = element_text(size=4),
+         legend.key.height = unit(0.25, 'cm'),
+         legend.key.width = unit(0.25, 'cm')) +
+  scale_color_manual(values=c("#b15928", "#1f78b4", "#cab2d6", "#ccebc5", "#fb9a99", "#e31a1c", "#6a3d9a", "#ff7f00", "#ffed6f", "#fdbf6f", "#ffff99", "#a6cee3", "#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#b2df8a", "#bc80bd", "#33a02c", "#ccebc5", "#ffed6f", "#000000", "#bdbdbd")) +
+  geom_text(aes(x=UMAP1,y = UMAP2,label = cell_label), data = class_avg,inherit.aes = F, color = "black",fontface = "bold",size = 2) +
+  annotate(geom = 'text', label = 'a', x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
+
+
+num_bins_pbmc <- 15
+
+shape_value_pbmc <- calculate_effective_shape_value(.data = UMAP_pbmc,
+                                                      x = UMAP1, y = UMAP2) ## 0.8772751
+
+## To extract bin centroids
+hexbin_data_object_pbmc <- extract_hexbin_centroids(nldr_df = UMAP_pbmc,
+                                                      num_bins = num_bins_pbmc,
+                                                      shape_val = shape_value_pbmc, x = UMAP1, y = UMAP2)
+
+df_bin_centroids_pbmc <- hexbin_data_object_pbmc$hexdf_data
+
+#num_non_empty_bins_pbmc <- df_bin_centroids_pbmc$hexID |> length() #83
+
+
+
+## Triangulate bin centroids
+tr1_object_pbmc <- triangulate_bin_centroids(df_bin_centroids_pbmc, x, y)
+tr_from_to_df_pbmc <- generate_edge_info(triangular_object = tr1_object_pbmc)
+
+## Compute 2D distances
+distance_pbmc <- cal_2d_dist(.data = tr_from_to_df_pbmc)
+
+## To find the benchmark value
+benchmark_pbmc <- find_benchmark_value(.data = distance_pbmc, distance_col = distance)
+benchmark_pbmc <- 2.5
+  
+
+trimesh_removed_pbmc_umap <- remove_long_edges(.data = distance_pbmc, benchmark_value = benchmark_pbmc,
+                                                 triangular_object = tr1_object_pbmc, distance_col = distance)
+
+trimesh_removed_pbmc_umap <- trimesh_removed_pbmc_umap +
+  geom_point(size = 1, colour = "#33a02c") +
+  #ggtitle("(b)") +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = 7, hjust = 0.5, vjust = -0.5),
+        axis.title.x = element_blank(), axis.title.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  annotate(geom = 'text', label = 'b', x = -Inf, y = Inf, hjust = -0.5, vjust = 1.5, size = 3)
+
+training_data_pbmc <- read_rds("data/pbmc_pca_50.rds")
+training_data_pbmc <- training_data_pbmc[, 1:15] |>
+  mutate(ID = 1:NROW(training_data_pbmc))
+
+UMAP_pbmc_with_hb_id <- UMAP_pbmc |>
+  dplyr::mutate(hb_id = hexbin_data_object_pbmc$hb_data@cID)
+
+plot_list2_pbmc_error <- readRDS("data/plot_list2_pbmc_error.rds")
+
+plot_list2_pbmc + trimesh_removed_pbmc_umap + plot_list2_pbmc_error +
+plot_layout(guides='collect', ncol=3) &
+  theme(legend.position='bottom')
+```
+
+## Summary
+
+::: {.columns}
+::: {.column width='50%'}
+* Dimension reduction is hard
+* Maximising variance can create or elongate structures that may not be present in the data
+* Visualising in high dimensions using a tour is a way to assess model fit
+* This algorithm helps create an easier visualisation for end users
+
+:::
+::: {.column width='50%'}
+::: {.fragment}
+
+![Jayani Lakshika, PhD Candidate](images/jayani.jpg){fig-align="center" height="350px" style="text-align: center;"}
+:::
+:::
+:::
+
+## Data science and impact 
+
+#### Don't let a small amount of data limit your reach
+
+::: {.incremental}
+* Data is expensive, we all want more all the time...
+* But a "handful" of observations can lead to real change
+* At the same time, more data does not always mean more good
+
+:::
+
+::: {.fragment .incremental}
+* You can't model your way out of bad data
+* But you can model good data badly
+:::
+
+::: {.fragment}
+#### Impactful projects rely on good people, good problems and good techniques. {.center}
+
+:::
+
