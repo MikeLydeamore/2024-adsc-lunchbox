@@ -221,6 +221,17 @@ Use a multinomial likelihood function with a Dirichlet prior, with weights taken
 A psuedocount is added to each strata ($0.001 \sum{\text{weights}}$) to ensure the likelihood can be calculated with empty strata.
 :::
 
+::: {.quote .fragment}
+> Just because it's called $w$ doesn't make it a weight
+
+[L. Kennedy]{style="text-align: right; font-size: 75%;"}
+:::
+
+::: {.fragment}
+But for today it is a weight. We'll survive.
+:::
+
+
 ## Estimation methodology
 
 #### Step 5: Adjustment for life expectancy
@@ -769,6 +780,29 @@ plot_list2_pbmc_error <- readRDS("data/plot_list2_pbmc_error.rds")
 plot_list2_pbmc + trimesh_removed_pbmc_umap + plot_list2_pbmc_error +
 plot_layout(guides='collect', ncol=3) &
   theme(legend.position='bottom')
+```
+
+## Real-world example
+
+```{r}
+pbmc_umap <- readRDS("data/pbmc_umap.rds")
+pbmc_pca <- readRDS("data/pbmc_pca_50.rds")
+langevitour::langevitour(pbmc_pca)
+
+```
+
+## Real-world example
+
+```{r}
+df_exe <- read.csv("data/df_exe_better.rds")
+distance_df_small_edges <- read.csv("data/distance_df_small_edges_better.rds")
+langevitour::langevitour(df_exe[1:(length(df_exe)-1)], lineFrom = distance_df_small_edges$from, lineTo = distance_df_small_edges$to, group = df_exe$type, levelColors = c("#807dba" , "#000000"))
+```
+
+## Real-world example
+
+```{r}
+readRDS("data/better_umap_plot.rds")
 ```
 
 ## Summary
