@@ -364,7 +364,7 @@ langevitour::langevitour(data[, 1:7])
 :::
 
 
-## Dimension reduction 
+## Dimension reduction {.smaller}
 Dimension reduction is a common way to reduce a high dimensional dataset into a lower number of dimensions.
 
 * Linear techniques (like PCA) are classical techniques that use a linear mapping to reduce dimension
