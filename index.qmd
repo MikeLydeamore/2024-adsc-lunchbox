@@ -650,7 +650,7 @@ It follows that $f(g(x))$ maps the high-D point to the centroid in 2D.
 
 Define the high-dimension mean of all the points in $\mathbb{H}_i$ by $\hat{h}_i$. That is,
 
-$$\hat{h}^{(p)} = \frac{1}{|\mathbb{H}_i|}\sum_{x \in \mathbb{H}_i} \sum_{l = 1}^p x_{\cdot,l}$$
+$$\hat{h}^{(p)} = \frac{1}{|\mathbb{H}_i|}\sum_{x \in \mathbb{H}_i} \sum_{d = 1}^p x_{\cdot,d}$$
 
 ::: {.fragment}
 Finally, we choose a function $v: \mathbb{R}^2 \rightarrow \mathbb{R}^p$ such that $$v(\mathcal{h}_i) = \hat{h}^{(p)}.$$
